@@ -13,6 +13,16 @@ export default defineConfig(({ mode }) => {
             target: env.VITE_AZURE_OPENAI_ENDPOINT,
             changeOrigin: true,
             secure: false,
+          },
+          '/speech': {
+            target: 'https://japaneast.tts.speech.microsoft.com',
+            changeOrigin: true,
+            secure: false,
+            headers: {
+              ...(env.VITE_AZURE_SPEECH_KEY ? { 'Ocp-Apim-Subscription-Key': env.VITE_AZURE_SPEECH_KEY } : {}),
+              ...(env.VITE_AZURE_SPEECH_REGION ? { 'Ocp-Apim-Subscription-Region': env.VITE_AZURE_SPEECH_REGION } : {}),
+            },
+            rewrite: (path) => path.replace(/^\/speech/, '')
           }
         }
       },

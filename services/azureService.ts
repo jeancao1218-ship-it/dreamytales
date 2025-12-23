@@ -15,11 +15,16 @@ const apiVersion = "2024-05-01-preview";
 const textDeployment = import.meta.env.VITE_AZURE_OPENAI_TEXT_DEPLOYMENT || 'gpt-5-chat';
 const ttsDeployment = import.meta.env.VITE_AZURE_OPENAI_TTS_DEPLOYMENT || 'gpt-4o-mini-tts';
 
+// Azure Speech Service Config
+const speechKey = import.meta.env.VITE_AZURE_SPEECH_KEY || '';
+const speechRegion = import.meta.env.VITE_AZURE_SPEECH_REGION || 'japaneast';
+
 console.log("Azure Config:", { 
   endpoint, 
   textDeployment, 
   ttsDeployment,
-  hasKey: !!apiKey 
+  hasKey: !!apiKey,
+  hasSpeechKey: !!speechKey
 });
 
 const client = new AzureOpenAI({
@@ -120,13 +125,61 @@ export const generateStoryAudio = async (
         throw new Error("Audio generation text is empty");
     }
 
-    const response = await client.audio.speech.create({
-      model: ttsDeployment,
-      voice: voiceName,
-      input: text,
-      response_format: 'mp3',
-      speed: 1.0, // Reset to normal speed
+    if (!isDev && !speechKey) {
+      throw new Error("Missing Azure Speech key (VITE_AZURE_SPEECH_KEY)");
+    }
+
+    // Use Azure Speech Service REST API
+    // Use proxy in dev to avoid CORS, direct URL in prod
+    const baseUrl = isDev 
+      ? '/speech' 
+      : `https://${speechRegion}.tts.speech.microsoft.com`;
+      
+    const url = `${baseUrl}/cognitiveservices/v1`;
+    
+    // Construct SSML for advanced control (style, rate, pitch)
+    // Using zh-CN-XiaoxiaoNeural with affectionate style as requested
+    const ssml = `
+      <speak version='1.0' xml:lang='zh-CN' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts'>
+        <voice name='zh-CN-XiaoxiaoNeural'>
+          <mstts:express-as style='affectionate'>
+            <prosody rate='-15%' pitch='-5%'>
+              ${text}
+            </prosody>
+          </mstts:express-as>
+        </voice>
+      </speak>
+    `;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/ssml+xml',
+      'X-Microsoft-OutputFormat': 'audio-16khz-128kbitrate-mono-mp3',
+      'User-Agent': 'DreamyTales'
+    };
+
+    // In dev, the Vite proxy injects subscription headers to avoid CORS and keep keys out of browser requests.
+    if (!isDev) {
+      headers['Ocp-Apim-Subscription-Key'] = speechKey;
+      headers['Ocp-Apim-Subscription-Region'] = speechRegion;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: ssml
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Azure Speech API Error Details:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText,
+          url: url,
+          keyLength: speechKey ? speechKey.length : 0
+      });
+      throw new Error(`Azure Speech API failed (${response.status}): ${errorText}`);
+    }
 
     return await response.arrayBuffer();
 
