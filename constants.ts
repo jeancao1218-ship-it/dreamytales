@@ -57,12 +57,12 @@ export const THEME_SUGGESTIONS = [
 
 // Map friendly names to API voice names
 export const VOICE_OPTIONS = [
-  { label: '活力姐姐 (Nova)', value: VoiceName.Nova, gender: 'Female' },
-  { label: '温柔姐姐 (Shimmer)', value: VoiceName.Shimmer, gender: 'Female' },
-  { label: '阳光哥哥 (Alloy)', value: VoiceName.Alloy, gender: 'Male' },
-  { label: '沉稳大叔 (Onyx)', value: VoiceName.Onyx, gender: 'Male' },
-  { label: '回声哥哥 (Echo)', value: VoiceName.Echo, gender: 'Male' },
-  { label: '寓言讲述者 (Fable)', value: VoiceName.Fable, gender: 'Female' },
+  { label: '睡前哄睡 (Shimmer)', value: VoiceName.Shimmer, gender: 'Female' },
+  { label: '绘本时刻 (Fable)', value: VoiceName.Fable, gender: 'Female' },
+  { label: '活力玩耍 (Nova)', value: VoiceName.Nova, gender: 'Female' },
+  { label: '吃饭香香 (Alloy)', value: VoiceName.Alloy, gender: 'Male' },
+  { label: '沉稳陪伴 (Onyx)', value: VoiceName.Onyx, gender: 'Male' },
+  { label: '轻松午后 (Echo)', value: VoiceName.Echo, gender: 'Male' },
 ];
 
 // Placeholder for background music (Royalty Free Sleep Music Loop)

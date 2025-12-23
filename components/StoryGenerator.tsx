@@ -20,8 +20,38 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({ userProfile, onGenerate
   const [scene, setScene] = useState(initialSettings?.scene || SCENE_OPTIONS[0].value);
   const [theme, setTheme] = useState(initialSettings?.theme || '');
   const [language, setLanguage] = useState<Language>(initialSettings?.language || Language.Chinese);
-  const [selectedVoice, setSelectedVoice] = useState<VoiceName>(initialSettings?.selectedVoice || VoiceName.Kore);
+  // Default to Fable (Storyteller) for better narration
+  const [selectedVoice, setSelectedVoice] = useState<VoiceName>(initialSettings?.selectedVoice || VoiceName.Fable);
   const [customPrompt, setCustomPrompt] = useState('');
+  
+  // Progress simulation state
+  const [progress, setProgress] = useState(0);
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      setProgress(0);
+      // Simulate progress: Reach 95% in about 40-50 seconds
+      // Fast at first, then slower
+      interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 98) return 98; // Stall at 98%
+          
+          // Dynamic speed
+          let increment = 0.5;
+          if (prev < 30) increment = 1.5;
+          else if (prev < 60) increment = 0.8;
+          else if (prev < 80) increment = 0.4;
+          else increment = 0.1;
+
+          return Math.min(prev + increment, 98);
+        });
+      }, 200);
+    } else {
+      setProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const toggleAnimal = (char: string) => {
     setSelectedAnimals(prev => 
@@ -63,7 +93,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({ userProfile, onGenerate
           <label className="block text-sm font-black text-[#422006] mb-3 ml-1">
              邀请动物小伙伴
           </label>
-          <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar snap-x">
+          <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-1 no-scrollbar snap-x">
             {ANIMAL_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -186,25 +216,32 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ({ userProfile, onGenerate
             </div>
         </div>
 
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          className={`w-full py-4 rounded-[2rem] font-black text-lg shadow-lg transition-all active:scale-[0.98] ${
-            isLoading 
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' 
-              : 'bg-[#FF9F76] text-white shadow-orange-200 hover:bg-[#FF8E5E]'
-          }`}
-        >
-          {isLoading ? (
+        {isLoading ? (
+            <div className="w-full h-14 bg-gray-100 rounded-[2rem] relative overflow-hidden shadow-inner">
+                {/* Progress Bar Background */}
+                <div 
+                    className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-[#FF9F76] to-[#FF8E5E] transition-all duration-300 ease-out rounded-[2rem]"
+                    style={{ width: `${progress}%` }}
+                ></div>
+                
+                {/* Text Content */}
+                <div className="absolute inset-0 flex items-center justify-center z-10 text-[#422006] font-bold text-sm gap-2">
+                     <i className="fas fa-pen-nib fa-bounce text-orange-600"></i>
+                     <span>
+                        故事正在创作，请稍等约2分钟... {Math.round(progress)}%
+                     </span>
+                </div>
+            </div>
+        ) : (
+            <button 
+            type="submit" 
+            className="w-full py-4 rounded-[2rem] font-black text-lg shadow-lg transition-all active:scale-[0.98] bg-[#FF9F76] text-white shadow-orange-200 hover:bg-[#FF8E5E]"
+            >
             <span className="flex items-center justify-center gap-3">
-              <i className="fas fa-circle-notch fa-spin"></i> 正在创作中...
+                <i className="fas fa-sparkles"></i> 开始生成
             </span>
-          ) : (
-            <span className="flex items-center justify-center gap-3">
-              <i className="fas fa-sparkles"></i> 开始生成
-            </span>
-          )}
-        </button>
+            </button>
+        )}
       </form>
     </div>
   );

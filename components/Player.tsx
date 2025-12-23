@@ -54,7 +54,7 @@ const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if (bgMusicRef.current) {
       if (isPlaying && isBackgroundMusicOn) {
-        bgMusicRef.current.volume = 0.15; // Soft volume
+        bgMusicRef.current.volume = 0.25; // Increased volume for better audibility
         bgMusicRef.current.play().catch(e => console.log("Bg music interaction needed"));
       } else {
         bgMusicRef.current.pause();

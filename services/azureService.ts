@@ -71,9 +71,19 @@ export const generateStoryText = async (
 
   let userMessage = "请开始讲故事。";
   if (isSequelToContext) {
-    userMessage += `\n\n重要提示: 这是一个续集故事。
-    前情提要: ${isSequelToContext.substring(0, 500)}...
-    请保持角色性格一致，在新的场景 ${scene} 中开始新的温柔冒险。`;
+    userMessage += `\n\n【续集模式开启】
+    这是一个连续剧故事的最新一集。
+    
+    上一集剧情回顾:
+    "${isSequelToContext.substring(0, 800)}..."
+    
+    续写要求:
+    1. **强关联性**: 必须自然地承接上一集的结尾或核心事件。
+    2. **角色记忆**: 主角 ${childName} 和伙伴们应该记得上一集发生的事情（例如提到的物品、学到的道理）。
+    3. **新旧交替**: 在新的场景 ${scene} 中展开冒险，但要巧妙地融入上一集的元素。
+    4. **性格一致**: 保持所有角色的性格特征不变。
+    
+    请开始讲述这个精彩的续集！`;
   }
 
   try {
@@ -115,6 +125,7 @@ export const generateStoryAudio = async (
       voice: voiceName,
       input: text,
       response_format: 'mp3',
+      speed: 1.0, // Reset to normal speed
     });
 
     return await response.arrayBuffer();
