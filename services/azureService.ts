@@ -39,10 +39,42 @@ interface GeneratedStoryData {
   content: string;
 }
 
+const readTextOrJsonError = async (response: Response) => {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      const data = await response.json();
+      return data?.error ? String(data.error) : JSON.stringify(data);
+    } catch {
+      return `HTTP ${response.status}`;
+    }
+  }
+  try {
+    return await response.text();
+  } catch {
+    return `HTTP ${response.status}`;
+  }
+};
+
 export const generateStoryText = async (
   settings: StorySettings,
   isSequelToContext?: string
 ): Promise<GeneratedStoryData> => {
+  // In production (Vercel), never call Azure directly from the browser.
+  // Use serverless API to keep keys private.
+  if (!isDev) {
+    const resp = await fetch('/api/story', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings, sequelContext: isSequelToContext })
+    });
+    if (!resp.ok) {
+      const message = await readTextOrJsonError(resp);
+      throw new Error(message || `Story API failed (${resp.status})`);
+    }
+    return await resp.json();
+  }
+
   const { childName, age, mainCharacter, secondaryCharacters, scene, theme, language, customPrompt } = settings;
 
   const characterStr = secondaryCharacters.length > 0 
@@ -123,6 +155,20 @@ export const generateStoryAudio = async (
   try {
     if (!text || text.length === 0) {
         throw new Error("Audio generation text is empty");
+    }
+
+    // In production (Vercel), call serverless TTS so keys are never exposed.
+    if (!isDev) {
+      const resp = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      if (!resp.ok) {
+        const message = await readTextOrJsonError(resp);
+        throw new Error(message || `TTS API failed (${resp.status})`);
+      }
+      return await resp.arrayBuffer();
     }
 
     if (!isDev && !speechKey) {
