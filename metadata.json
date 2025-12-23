@@ -1,0 +1,7 @@
+{
+  "name": "DreamyTales - Bedtime Stories",
+  "description": "A magical bedtime story generator for children using AI. Generate personalized stories with soothing narration and background music.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
